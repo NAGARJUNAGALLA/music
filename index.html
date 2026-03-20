@@ -3,235 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Music Explorer</title>
+    <title>GitHub Music Dashboard</title>
     <style>
         :root {
-            --bg: #000000;
-            --card: #181818;
+            --bg: #090909;
+            --sidebar-bg: #121212;
             --primary: #1DB954;
+            --card-hover: #282828;
             --text-main: #ffffff;
             --text-dim: #b3b3b3;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
             display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .app-container {
-            width: 100%;
-            max-width: 450px;
-            background: #121212;
-            border-radius: 15px;
+            height: 100vh;
             overflow: hidden;
-            min-height: 80vh;
+        }
+
+        /* SIDEBAR (Starts Closed) */
+        .sidebar {
+            width: 250px;
+            background: var(--sidebar-bg);
+            height: 100%;
+            position: fixed;
+            left: -250px; /* Hidden by default */
+            transition: 0.3s ease;
+            z-index: 2000;
+            border-right: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar.open { left: 0; }
+
+        .sidebar-header { padding: 25px; font-weight: bold; font-size: 1.2rem; color: var(--primary); }
+        .nav-item { 
+            padding: 12px 25px; cursor: pointer; display: flex; align-items: center; 
+            transition: 0.2s; font-size: 0.9rem;
+        }
+        .nav-item:hover { background: var(--card-hover); }
+        .nav-item img { width: 30px; height: 30px; border-radius: 4px; margin-right: 12px; }
+
+        /* MAIN AREA */
+        .main-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
             position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            padding: 20px;
+            margin-left: 0;
         }
 
-        /* Views */
-        .view { padding: 20px; transition: 0.3s; }
-        .hidden { display: none; }
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 2100;
+            background: var(--primary);
+            border: none;
+            color: black;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
 
-        header h1 { font-size: 1.5rem; margin-bottom: 20px; }
-
-        /* Playlist Grid */
-        .playlist-grid {
+        /* DASHBOARD GRID */
+        .dashboard-view h1 { margin: 60px 0 30px 0; font-size: 2rem; }
+        .grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
         }
-
-        .playlist-card {
-            background: var(--card);
+        .pl-card {
+            background: var(--sidebar-bg);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             transition: 0.3s;
-            text-align: center;
         }
+        .pl-card:hover { background: var(--card-hover); transform: translateY(-5px); }
+        .pl-card img { width: 100%; aspect-ratio: 1; border-radius: 8px; margin-bottom: 12px; object-fit: cover; }
+        .pl-card b { display: block; margin-bottom: 5px; }
+        .pl-card span { font-size: 0.8rem; color: var(--text-dim); }
 
-        .playlist-card:hover { background: #282828; }
+        /* PLAYER VIEW (BIG IMAGE) */
+        .player-view { display: none; max-width: 900px; margin: 60px auto; }
+        .player-hero { display: flex; gap: 40px; align-items: flex-end; margin-bottom: 40px; }
+        .player-hero img { width: 300px; height: 300px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
+        .hero-text h2 { font-size: 3rem; margin: 0; }
 
-        .playlist-card img {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            object-fit: cover;
-            margin-bottom: 10px;
-        }
+        /* AUDIO BAR */
+        .audio-container { background: #181818; padding: 20px; border-radius: 15px; margin-bottom: 30px; }
+        audio { width: 100%; filter: invert(1); }
 
-        /* Tracklist View */
-        .back-btn {
-            background: none;
-            border: none;
-            color: var(--primary);
-            cursor: pointer;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
+        .song-table { width: 100%; border-collapse: collapse; }
+        .song-table tr { border-bottom: 1px solid #222; cursor: pointer; }
+        .song-table tr:hover { background: var(--glass); }
+        .song-table td { padding: 12px; }
+        .active-song { color: var(--primary); font-weight: bold; }
 
-        .track-item {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            border-bottom: 1px solid #222;
-        }
-
-        .track-item:hover { background: #282828; }
-        .track-item b { display: block; font-size: 0.9rem; }
-        .track-item span { font-size: 0.8rem; color: var(--text-dim); }
-
-        /* Sticky Player Bar */
-        .now-playing-bar {
-            position: sticky;
-            bottom: 0;
-            background: #181818;
-            border-top: 2px solid var(--primary);
-            padding: 15px;
-            display: none; /* Only shows when a song starts */
-        }
-
-        audio {
-            width: 100%;
-            height: 35px;
-            filter: invert(1);
-            margin-top: 10px;
-        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <div id="library-view" class="view">
-        <header><h1>Your Playlists</h1></header>
-        <div class="playlist-grid" id="playlist-grid">
-            </div>
+    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">GitHub Music</div>
+        <div class="nav-item" onclick="showDashboard()">🏠 Home / Dashboard</div>
+        <div style="padding: 10px 25px; color: #555; font-size: 0.7rem; text-transform: uppercase;">Your Playlists</div>
+        <div id="side-pl-list"></div>
     </div>
 
-    <div id="track-view" class="view hidden">
-        <button class="back-btn" onclick="showLibrary()">← Back to Library</button>
-        <h2 id="current-playlist-name">Playlist Name</h2>
-        <div id="track-list">
-            </div>
-    </div>
-
-    <div class="now-playing-bar" id="player-bar">
-        <div style="font-size: 0.85rem;">
-            <b id="playing-title">Song Title</b><br>
-            <span id="playing-artist" style="color:#b3b3b3">Artist</span>
+    <div class="main-wrapper">
+        <div id="dashboard" class="dashboard-view">
+            <h1>Good Morning</h1>
+            <div class="grid" id="dashboard-grid"></div>
         </div>
-        <audio id="audio-player" controls controlsList="nodownload"></audio>
+
+        <div id="player" class="player-view">
+            <div class="player-hero">
+                <img id="big-cover" src="" alt="Cover">
+                <div class="hero-text">
+                    <p style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Playlist</p>
+                    <h2 id="pl-title">Playlist Name</h2>
+                </div>
+            </div>
+
+            <div class="audio-container">
+                <div id="now-playing-info" style="margin-bottom: 10px;">
+                    <b id="song-name">Select a song</b> — <span id="song-artist" style="color:var(--text-dim)">Artist</span>
+                </div>
+                <audio id="main-audio" controls controlsList="nodownload"></audio>
+            </div>
+
+            <table class="song-table" id="tracklist"></table>
+        </div>
     </div>
-</div>
 
 <script>
-    // --- DATABASE: Add your GitHub Raw URLs here ---
     const data = [
         {
-            id: 0,
-            title: "శ్రీ లలితా సహస్రనామం",
-            cover: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg", // Replace with GitHub Image URL
+            name: "శ్రీ లలితా సహస్రనామం",
+            cover: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg",
             songs: [
-                { name: "Coffee Morning", artist: "Beats by GH", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
-                { name: "Rainy Window", artist: "Sleepy Cat", url: "URL_HERE" }
+                { title: "SLSN 1", artist: "చాగంటి", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
+                { title: "Digital Dreams", artist: "Synth Dev", url: "URL_2" }
             ]
         },
         {
-            id: 1,
-            title: "Workout Mix",
-            cover: "https://picsum.photos/id/2/200", 
+            name: "Coding Mode",
+            cover: "https://picsum.photos/id/102/600",
             songs: [
-                { name: "Power Up", artist: "Gym Rat", url: "URL_HERE" },
-                { name: "Fast Lane", artist: "Runner 101", url: "URL_HERE" }
+                { title: "Binary Beats", artist: "The Coder", url: "URL_3" },
+                { title: "Lo-Fi Script", artist: "JS Master", url: "URL_4" }
             ]
         }
     ];
 
-    const libraryView = document.getElementById('library-view');
-    const trackView = document.getElementById('track-view');
-    const playerBar = document.getElementById('player-bar');
-    const audio = document.getElementById('audio-player');
+    const sidebar = document.getElementById('sidebar');
+    const dashboard = document.getElementById('dashboard');
+    const player = document.getElementById('player');
+    const audio = document.getElementById('main-audio');
 
-    // Render the Playlists
-    function renderLibrary() {
-        const grid = document.getElementById('playlist-grid');
-        data.forEach(pl => {
+    let currentPlaylist = null;
+    let currentIdx = 0;
+
+    function init() {
+        const grid = document.getElementById('dashboard-grid');
+        const sideList = document.getElementById('side-pl-list');
+
+        data.forEach((pl, i) => {
+            // Add to Dashboard
             const card = document.createElement('div');
-            card.className = 'playlist-card';
-            card.innerHTML = `
-                <img src="${pl.cover}">
-                <b>${pl.title}</b>
-            `;
-            card.onclick = () => showTracks(pl.id);
+            card.className = 'pl-card';
+            card.innerHTML = `<img src="${pl.cover}"><b>${pl.name}</b><span>Playlist • ${pl.songs.length} songs</span>`;
+            card.onclick = () => openPlaylist(i);
             grid.appendChild(card);
-        });
-    }
 
-    function showTracks(playlistId) {
-        const pl = data[playlistId];
-        document.getElementById('current-playlist-name').innerText = pl.title;
-        const listContainer = document.getElementById('track-list');
-        listContainer.innerHTML = ''; // Clear old tracks
-
-        pl.songs.forEach((song, index) => {
+            // Add to Sidebar
             const item = document.createElement('div');
-            item.className = 'track-item';
-            item.innerHTML = `
-                <div style="margin-right:15px; color:#1DB954">${index + 1}</div>
-                <div>
-                    <b>${song.name}</b>
-                    <span>${song.artist}</span>
-                </div>
-            `;
-            item.onclick = () => playSong(song, pl.songs, index);
-            listContainer.appendChild(item);
+            item.className = 'nav-item';
+            item.innerHTML = `<img src="${pl.cover}"> ${pl.name}`;
+            item.onclick = () => { openPlaylist(i); toggleSidebar(); };
+            sideList.appendChild(item);
         });
-
-        libraryView.classList.add('hidden');
-        trackView.classList.remove('hidden');
     }
 
-    function showLibrary() {
-        trackView.classList.add('hidden');
-        libraryView.classList.remove('hidden');
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
     }
 
-    let currentPlaylistSongs = [];
-    let currentSongIndex = 0;
+    function showDashboard() {
+        player.style.display = 'none';
+        dashboard.style.display = 'block';
+        toggleSidebar();
+    }
 
-    function playSong(song, playlistSongs, index) {
-        currentPlaylistSongs = playlistSongs;
-        currentSongIndex = index;
+    function openPlaylist(idx) {
+        currentPlaylist = data[idx];
+        dashboard.style.display = 'none';
+        player.style.display = 'block';
 
+        document.getElementById('big-cover').src = currentPlaylist.cover;
+        document.getElementById('pl-title').innerText = currentPlaylist.name;
+
+        renderTracks();
+    }
+
+    function renderTracks() {
+        const list = document.getElementById('tracklist');
+        list.innerHTML = '';
+        currentPlaylist.songs.forEach((s, i) => {
+            const tr = document.createElement('tr');
+            tr.id = `tr-${i}`;
+            tr.innerHTML = `<td style="width:30px">${i+1}</td><td><b>${s.title}</b><br><small style="color:#aaa">${s.artist}</small></td>`;
+            tr.onclick = () => playSong(i);
+            list.appendChild(tr);
+        });
+    }
+
+    function playSong(i) {
+        currentIdx = i;
+        const song = currentPlaylist.songs[i];
         audio.src = song.url;
-        document.getElementById('playing-title').innerText = song.name;
-        document.getElementById('playing-artist').innerText = song.artist;
-        
-        playerBar.style.display = 'block';
+        document.getElementById('song-name').innerText = song.title;
+        document.getElementById('song-artist').innerText = song.artist;
+
+        document.querySelectorAll('tr').forEach(r => r.classList.remove('active-song'));
+        document.getElementById(`tr-${i}`).classList.add('active-song');
+
         audio.play();
     }
 
-    // Continuous Playback within the selected playlist
     audio.onended = () => {
-        currentSongIndex++;
-        if (currentSongIndex < currentPlaylistSongs.length) {
-            playSong(currentPlaylistSongs[currentSongIndex], currentPlaylistSongs, currentSongIndex);
-        } else {
-            // Loop back to start of playlist or stop
-            playSong(currentPlaylistSongs[0], currentPlaylistSongs, 0);
-        }
+        let next = (currentIdx + 1) % currentPlaylist.songs.length;
+        playSong(next);
     };
 
-    renderLibrary();
+    init();
 </script>
-
 </body>
 </html>
