@@ -3,83 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub MP3 Player</title>
+    <title>Modern GitHub Player</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #121212; color: white; }
-        .player-card { background: #1e1e1e; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 320px; }
-        h2 { margin-bottom: 20px; font-size: 1.2rem; color: #1DB954; }
-        audio { width: 100%; margin: 20px 0; outline: none; }
-        .playlist { text-align: left; margin-top: 20px; max-height: 150px; overflow-y: auto; }
-        .song-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; transition: 0.3s; }
-        .song-item:hover { background: #333; }
-        .active { color: #1DB954; font-weight: bold; }
+        :root {
+            --primary: #1DB954;
+            --bg: #0f0f0f;
+            --card: #181818;
+            --text: #ffffff;
+            --text-dim: #b3b3b3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .player-container {
+            background: var(--card);
+            width: 380px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid #282828;
+        }
+
+        .album-art {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: linear-gradient(45deg, #282828, #121212);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        .track-info {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .track-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* The Custom Audio Player Styling */
+        audio {
+            width: 100%;
+            height: 40px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5); /* Makes it match dark mode */
+            margin-bottom: 20px;
+        }
+
+        .playlist {
+            margin-top: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            border-top: 1px solid #282828;
+            padding-top: 15px;
+        }
+
+        .playlist::-webkit-scrollbar {
+            width: 4px;
+        }
+        .playlist::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 10px;
+        }
+
+        .song-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 5px;
+        }
+
+        .song-item:hover {
+            background: #282828;
+        }
+
+        .song-item.active {
+            background: rgba(29, 185, 84, 0.1);
+            color: var(--primary);
+        }
+
+        .song-item.active::before {
+            content: "▶";
+            margin-right: 10px;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
 
-<div class="player-card">
-    <h2>My GitHub Jukebox</h2>
-    <div id="current-song">Select a song</div>
-    <audio id="audio-player" controls></audio>
+<div class="player-container">
+    <div class="album-art">🎵</div>
+    
+    <div class="track-info">
+        <p class="track-title" id="display-title">Select a Track</p>
+        <p class="track-artist">GitHub Cloud Library</p>
+    </div>
+
+    <audio id="audio-player" controls controlsList="nodownload"></audio>
     
     <div class="playlist" id="playlist">
         </div>
 </div>
 
 <script>
-    // 1. REPLACE THESE URLS WITH YOUR RAW GITHUB LINKS
+    // Configuration: Add your RAW GitHub URLs here
     const songs = [
-        {
-            title: "Song One",
-            url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3"
-        },
-        {
-            title: "Song Two",
-            url: "https://raw.githubusercontent.com/USERNAME/REPO/main/song2.mp3"
-        }
+        { title: "శ్రీ లలిత సహస్ర నామం 1", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
+        { title: "Starboy", url: "YOUR_RAW_URL_2" },
+        { title: "Blinding Lights", url: "YOUR_RAW_URL_3" }
     ];
 
-    const audioPlayer = document.getElementById('audio-player');
-    const playlistContainer = document.getElementById('playlist');
-    const currentSongTitle = document.getElementById('current-song');
-    let currentTrackIndex = 0;
+    const audio = document.getElementById('audio-player');
+    const playlist = document.getElementById('playlist');
+    const displayTitle = document.getElementById('display-title');
+    let currentIndex = 0;
 
-    function loadTrack(index) {
+    function init() {
+        songs.forEach((song, index) => {
+            const item = document.createElement('div');
+            item.className = 'song-item';
+            item.innerText = song.title;
+            item.onclick = () => playSong(index);
+            playlist.appendChild(item);
+        });
+        loadSong(0);
+    }
+
+    function loadSong(index) {
+        currentIndex = index;
         const song = songs[index];
-        audioPlayer.src = song.url;
-        currentSongTitle.innerText = "Playing: " + song.title;
+        audio.src = song.url;
+        displayTitle.innerText = song.title;
         
-        // Highlight active song
-        document.querySelectorAll('.song-item').forEach((el, i) => {
-            el.classList.toggle('active', i === index);
+        // Update active class
+        const items = document.querySelectorAll('.song-item');
+        items.forEach((item, i) => {
+            item.classList.toggle('active', i === index);
         });
     }
 
-    // Initialize Playlist
-    songs.forEach((song, index) => {
-        const div = document.createElement('div');
-        div.classList.add('song-item');
-        div.innerText = song.title;
-        div.onclick = () => {
-            currentTrackIndex = index;
-            loadTrack(index);
-            audioPlayer.play();
-        };
-        playlistContainer.appendChild(div);
-    });
+    function playSong(index) {
+        loadSong(index);
+        audio.play();
+    }
 
-    // Handle "Continuous" Playback
-    audioPlayer.onended = () => {
-        currentTrackIndex++;
-        if (currentTrackIndex >= songs.length) {
-            currentTrackIndex = 0; // Loop back to start
-        }
-        loadTrack(currentTrackIndex);
-        audioPlayer.play();
+    // Continuous Playback logic
+    audio.onended = () => {
+        let nextIndex = currentIndex + 1;
+        if (nextIndex >= songs.length) nextIndex = 0;
+        playSong(nextIndex);
     };
 
-    // Load first track on start
-    loadTrack(0);
+    init();
 </script>
 
 </body>
