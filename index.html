@@ -3,197 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Music Dashboard</title>
+    <title>LEAP Music Player</title>
     <style>
         :root {
-            --bg: #090909;
-            --sidebar-bg: #121212;
-            --primary: #1DB954;
-            --card-hover: #282828;
-            --text-main: #ffffff;
-            --text-dim: #b3b3b3;
+            --bg-light: #f4f7f6;
+            --header-green: #2d5a41; /* Matches LEAP Header */
+            --primary-green: #1DB954;
+            --card-blue: #e0f7f6;
+            --card-pink: #fce4ec;
+            --card-yellow: #fff9c4;
+            --card-purple: #e8eaf6;
         }
 
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
-            color: var(--text-main);
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: var(--bg-light);
+            background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
             margin: 0;
             display: flex;
             height: 100vh;
             overflow: hidden;
         }
 
-        /* SIDEBAR (Starts Closed) */
+        /* HEADER AREA */
+        header {
+            background-color: var(--header-green);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        /* SIDEBAR */
         .sidebar {
-            width: 250px;
-            background: var(--sidebar-bg);
+            width: 300px;
+            background: white;
             height: 100%;
             position: fixed;
-            left: -250px; /* Hidden by default */
-            transition: 0.3s ease;
+            left: -310px; /* Hidden */
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             z-index: 2000;
-            border-right: 1px solid #333;
-            display: flex;
-            flex-direction: column;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.2);
         }
-
         .sidebar.open { left: 0; }
 
-        .sidebar-header { padding: 25px; font-weight: bold; font-size: 1.2rem; color: var(--primary); }
-        .nav-item { 
-            padding: 12px 25px; cursor: pointer; display: flex; align-items: center; 
-            transition: 0.2s; font-size: 0.9rem;
+        .sidebar-header {
+            padding: 20px;
+            background: var(--header-green);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .nav-item:hover { background: var(--card-hover); }
-        .nav-item img { width: 30px; height: 30px; border-radius: 4px; margin-right: 12px; }
+
+        .close-sidebar-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .side-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        .side-item img { width: 25px; height: 25px; margin-right: 15px; border-radius: 4px; }
+        .side-item:hover { background: #f9f9f9; color: var(--header-green); }
 
         /* MAIN AREA */
-        .main-wrapper {
+        .main-container {
             flex-grow: 1;
+            margin-top: 70px;
             overflow-y: auto;
-            position: relative;
             padding: 20px;
-            margin-left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
-        .menu-btn {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 2100;
-            background: var(--primary);
-            border: none;
-            color: black;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-        }
-
-        /* DASHBOARD GRID */
-        .dashboard-view h1 { margin: 60px 0 30px 0; font-size: 2rem; }
-        .grid {
+        .grid-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
         }
-        .pl-card {
-            background: var(--sidebar-bg);
+
+        /* ALBUM CARDS */
+        .category-card {
+            aspect-ratio: 1/1.1;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
             padding: 15px;
-            border-radius: 12px;
             cursor: pointer;
-            transition: 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            transition: 0.2s;
+            border: 1px solid rgba(0,0,0,0.05);
         }
-        .pl-card:hover { background: var(--card-hover); transform: translateY(-5px); }
-        .pl-card img { width: 100%; aspect-ratio: 1; border-radius: 8px; margin-bottom: 12px; object-fit: cover; }
-        .pl-card b { display: block; margin-bottom: 5px; }
-        .pl-card span { font-size: 0.8rem; color: var(--text-dim); }
+        .category-card:active { transform: scale(0.96); }
+        .category-card img { 
+            width: 70px; 
+            height: 70px; 
+            margin-bottom: 15px; 
+            object-fit: contain; 
+        }
+        .category-card b { font-size: 0.95rem; color: #333; line-height: 1.2; }
+
+        /* CARD BACKGROUND COLORS */
+        .c-1 { background-color: var(--card-blue); }
+        .c-2 { background-color: var(--card-pink); }
+        .c-3 { background-color: var(--card-yellow); }
+        .c-4 { background-color: var(--card-purple); }
 
         /* PLAYER VIEW (BIG IMAGE) */
-        .player-view { display: none; max-width: 900px; margin: 60px auto; }
-        .player-hero { display: flex; gap: 40px; align-items: flex-end; margin-bottom: 40px; }
-        .player-hero img { width: 300px; height: 300px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); }
-        .hero-text h2 { font-size: 3rem; margin: 0; }
+        #player-view { 
+            display: none; 
+            width: 100%; 
+            max-width: 450px; 
+            background: white; 
+            border-radius: 20px; 
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        #player-view img.big-art { 
+            width: 100%; 
+            aspect-ratio: 1; 
+            border-radius: 12px; 
+            object-fit: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
 
-        /* AUDIO BAR */
-        .audio-container { background: #181818; padding: 20px; border-radius: 15px; margin-bottom: 30px; }
-        audio { width: 100%; filter: invert(1); }
+        audio { width: 100%; margin: 20px 0; filter: hue-rotate(90deg); }
 
-        .song-table { width: 100%; border-collapse: collapse; }
-        .song-table tr { border-bottom: 1px solid #222; cursor: pointer; }
-        .song-table tr:hover { background: var(--glass); }
-        .song-table td { padding: 12px; }
-        .active-song { color: var(--primary); font-weight: bold; }
+        .song-row {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+        .song-row b { font-size: 0.9rem; }
+        .song-row:hover { background: #fcfcfc; }
+        .playing-now { color: var(--header-green); font-weight: bold; }
 
-        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+    <header>
+        <div onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.4rem;">☰</div>
+        <div style="text-align: center;">
+            <h2 style="font-size: 1rem;">LEAP</h2>
+            <span style="font-size: 0.7rem; opacity: 0.8;">Music Excellence Hub</span>
+        </div>
+        <div onclick="showHome()" style="cursor:pointer; font-size: 1.4rem;">🏠</div>
+    </header>
 
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">GitHub Music</div>
-        <div class="nav-item" onclick="showDashboard()">🏠 Home / Dashboard</div>
-        <div style="padding: 10px 25px; color: #555; font-size: 0.7rem; text-transform: uppercase;">Your Playlists</div>
-        <div id="side-pl-list"></div>
+        <div class="sidebar-header">
+            <span>Playlists</span>
+            <button class="close-sidebar-btn" onclick="toggleSidebar()">✕</button>
+        </div>
+        <div id="side-pl-list">
+            </div>
     </div>
 
-    <div class="main-wrapper">
-        <div id="dashboard" class="dashboard-view">
-            <h1>Good Morning</h1>
-            <div class="grid" id="dashboard-grid"></div>
+    <div class="main-container">
+        <div id="dashboard">
+            <h3 style="color: var(--header-green); margin-bottom: 20px;">Governance Playlists</h3>
+            <div class="grid-container" id="playlist-grid">
+                </div>
         </div>
 
-        <div id="player" class="player-view">
-            <div class="player-hero">
-                <img id="big-cover" src="" alt="Cover">
-                <div class="hero-text">
-                    <p style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Playlist</p>
-                    <h2 id="pl-title">Playlist Name</h2>
+        <div id="player-view">
+            <button onclick="showHome()" style="border:none; background:none; color:var(--header-green); cursor:pointer; margin-bottom:15px; font-weight:bold;">← Back</button>
+            <img id="main-art" class="big-art" src="" alt="Cover">
+            <h2 id="pl-display-name" style="margin: 15px 0 5px 0; font-size: 1.3rem;">Playlist Name</h2>
+            <p id="song-info" style="color:#777; font-size: 0.85rem; margin-bottom: 20px;">Select a song</p>
+            
+            <audio id="audio-player" controls controlsList="nodownload"></audio>
+            
+            <div id="tracklist-container" style="margin-top: 20px;">
                 </div>
-            </div>
-
-            <div class="audio-container">
-                <div id="now-playing-info" style="margin-bottom: 10px;">
-                    <b id="song-name">Select a song</b> — <span id="song-artist" style="color:var(--text-dim)">Artist</span>
-                </div>
-                <audio id="main-audio" controls controlsList="nodownload"></audio>
-            </div>
-
-            <table class="song-table" id="tracklist"></table>
         </div>
     </div>
 
 <script>
-    const data = [
+    // --- DATA: Add your GitHub Image and MP3 URLs here ---
+    const playlists = [
         {
-            name: "శ్రీ లలితా సహస్రనామం",
-            cover: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg",
+            name: "IFA Tablet Distribution",
+            cardImg: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg", // Small icon for card
+            albumArt: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg", // Large cover for player
+            color: "c-1",
             songs: [
-                { title: "SLSN 1", artist: "చాగంటి", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
-                { title: "SLSN 2", artist: "చాగంటి", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN2.mp3" },
-                { title: "SLSN 3", artist: "చాగంటి", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN3.mp3" },
-                { title: "SLSN 4", artist: "చాగంటి", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN4.mp3" }
+                { title: "SLSN 1", artist: "CHAGANTI", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
+                { title: "SLSN 2", artist: "CHAGANTI", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN2.mp3" },
+                { title: "SLSN 3", artist: "CHAGANTI", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN3.mp3" },
             ]
         },
         {
-            name: "Coding Mode",
-            cover: "https://picsum.photos/id/102/600",
+            name: "MDM Inspection",
+            cardImg: "https://raw.githubusercontent.com/USER/REPO/main/check_icon.png",
+            albumArt: "https://raw.githubusercontent.com/USER/REPO/main/check_big.jpg",
+            color: "c-2",
             songs: [
-                { title: "Binary Beats", artist: "The Coder", url: "URL_3" },
-                { title: "Lo-Fi Script", artist: "JS Master", url: "URL_4" }
+                { title: "Quality Check", artist: "Inspector", url: "URL_3" }
+            ]
+        },
+        {
+            name: "Commodity Balances",
+            cardImg: "https://raw.githubusercontent.com/USER/REPO/main/stock_icon.png",
+            albumArt: "https://raw.githubusercontent.com/USER/REPO/main/stock_big.jpg",
+            color: "c-3",
+            songs: [
+                { title: "Balance Flow", artist: "Stockist", url: "URL_4" }
+            ]
+        },
+        {
+            name: "Daily Feedback",
+            cardImg: "https://raw.githubusercontent.com/USER/REPO/main/chat_icon.png",
+            albumArt: "https://raw.githubusercontent.com/USER/REPO/main/chat_big.jpg",
+            color: "c-4",
+            songs: [
+                { title: "Citizen Voices", artist: "Feedback Lo-Fi", url: "URL_5" }
             ]
         }
     ];
 
     const sidebar = document.getElementById('sidebar');
-    const dashboard = document.getElementById('dashboard');
-    const player = document.getElementById('player');
-    const audio = document.getElementById('main-audio');
-
+    const audio = document.getElementById('audio-player');
     let currentPlaylist = null;
-    let currentIdx = 0;
+    let trackIndex = 0;
 
     function init() {
-        const grid = document.getElementById('dashboard-grid');
+        const grid = document.getElementById('playlist-grid');
         const sideList = document.getElementById('side-pl-list');
 
-        data.forEach((pl, i) => {
-            // Add to Dashboard
+        playlists.forEach((pl, i) => {
+            // 1. Dashboard Card
             const card = document.createElement('div');
-            card.className = 'pl-card';
-            card.innerHTML = `<img src="${pl.cover}"><b>${pl.name}</b><span>Playlist • ${pl.songs.length} songs</span>`;
+            card.className = `category-card ${pl.color}`;
+            card.innerHTML = `<img src="${pl.cardImg}"><b>${pl.name}</b>`;
             card.onclick = () => openPlaylist(i);
             grid.appendChild(card);
 
-            // Add to Sidebar
+            // 2. Sidebar Item
             const item = document.createElement('div');
-            item.className = 'nav-item';
-            item.innerHTML = `<img src="${pl.cover}"> ${pl.name}`;
+            item.className = 'side-item';
+            item.innerHTML = `<img src="${pl.cardImg}"><span>${pl.name}</span>`;
             item.onclick = () => { openPlaylist(i); toggleSidebar(); };
             sideList.appendChild(item);
         });
@@ -203,50 +276,49 @@
         sidebar.classList.toggle('open');
     }
 
-    function showDashboard() {
-        player.style.display = 'none';
-        dashboard.style.display = 'block';
-        toggleSidebar();
-    }
-
     function openPlaylist(idx) {
-        currentPlaylist = data[idx];
-        dashboard.style.display = 'none';
-        player.style.display = 'block';
-
-        document.getElementById('big-cover').src = currentPlaylist.cover;
-        document.getElementById('pl-title').innerText = currentPlaylist.name;
-
+        currentPlaylist = playlists[idx];
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('player-view').style.display = 'block';
+        
+        document.getElementById('main-art').src = currentPlaylist.albumArt;
+        document.getElementById('pl-display-name').innerText = currentPlaylist.name;
+        
         renderTracks();
     }
 
     function renderTracks() {
-        const list = document.getElementById('tracklist');
-        list.innerHTML = '';
+        const container = document.getElementById('tracklist-container');
+        container.innerHTML = '';
         currentPlaylist.songs.forEach((s, i) => {
-            const tr = document.createElement('tr');
-            tr.id = `tr-${i}`;
-            tr.innerHTML = `<td style="width:30px">${i+1}</td><td><b>${s.title}</b><br><small style="color:#aaa">${s.artist}</small></td>`;
-            tr.onclick = () => playSong(i);
-            list.appendChild(tr);
+            const row = document.createElement('div');
+            row.className = 'song-row';
+            row.id = `t-${i}`;
+            row.innerHTML = `<b>${s.title}</b><small>${s.artist}</small>`;
+            row.onclick = () => playSong(i);
+            container.appendChild(row);
         });
     }
 
-    function playSong(i) {
-        currentIdx = i;
-        const song = currentPlaylist.songs[i];
+    function playSong(idx) {
+        trackIndex = idx;
+        const song = currentPlaylist.songs[idx];
         audio.src = song.url;
-        document.getElementById('song-name').innerText = song.title;
-        document.getElementById('song-artist').innerText = song.artist;
-
-        document.querySelectorAll('tr').forEach(r => r.classList.remove('active-song'));
-        document.getElementById(`tr-${i}`).classList.add('active-song');
-
+        document.getElementById('song-info').innerText = `${song.title} — ${song.artist}`;
+        
+        document.querySelectorAll('.song-row').forEach(el => el.classList.remove('playing-now'));
+        document.getElementById(`t-${idx}`).classList.add('playing-now');
+        
         audio.play();
     }
 
+    function showHome() {
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('player-view').style.display = 'none';
+    }
+
     audio.onended = () => {
-        let next = (currentIdx + 1) % currentPlaylist.songs.length;
+        let next = (trackIndex + 1) % currentPlaylist.songs.length;
         playSong(next);
     };
 
