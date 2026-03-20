@@ -3,185 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern GitHub Player</title>
+    <title>GitHub Music Explorer</title>
     <style>
         :root {
-            --primary: #1DB954;
-            --bg: #0f0f0f;
+            --bg: #000000;
             --card: #181818;
-            --text: #ffffff;
+            --primary: #1DB954;
+            --text-main: #ffffff;
             --text-dim: #b3b3b3;
         }
 
         body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg);
-            color: var(--text);
+            color: var(--text-main);
+            margin: 0;
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            padding: 20px;
         }
 
-        .player-container {
-            background: var(--card);
-            width: 380px;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            border: 1px solid #282828;
-        }
-
-        .album-art {
+        .app-container {
             width: 100%;
-            aspect-ratio: 1/1;
-            background: linear-gradient(45deg, #282828, #121212);
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 5rem;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        }
-
-        .track-info {
-            text-align: left;
-            margin-bottom: 20px;
-        }
-
-        .track-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin: 0;
-            white-space: nowrap;
+            max-width: 450px;
+            background: #121212;
+            border-radius: 15px;
             overflow: hidden;
-            text-overflow: ellipsis;
+            min-height: 80vh;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        .track-artist {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-            margin-top: 5px;
+        /* Views */
+        .view { padding: 20px; transition: 0.3s; }
+        .hidden { display: none; }
+
+        header h1 { font-size: 1.5rem; margin-bottom: 20px; }
+
+        /* Playlist Grid */
+        .playlist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
 
-        /* The Custom Audio Player Styling */
-        audio {
-            width: 100%;
-            height: 40px;
-            filter: invert(100%) hue-rotate(180deg) brightness(1.5); /* Makes it match dark mode */
-            margin-bottom: 20px;
-        }
-
-        .playlist {
-            margin-top: 10px;
-            max-height: 180px;
-            overflow-y: auto;
-            border-top: 1px solid #282828;
-            padding-top: 15px;
-        }
-
-        .playlist::-webkit-scrollbar {
-            width: 4px;
-        }
-        .playlist::-webkit-scrollbar-thumb {
-            background: #333;
+        .playlist-card {
+            background: var(--card);
+            padding: 15px;
             border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
         }
 
-        .song-item {
+        .playlist-card:hover { background: #282828; }
+
+        .playlist-card img {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-bottom: 10px;
+        }
+
+        /* Tracklist View */
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .track-item {
             display: flex;
             align-items: center;
             padding: 10px;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            margin-bottom: 5px;
+            border-bottom: 1px solid #222;
         }
 
-        .song-item:hover {
-            background: #282828;
+        .track-item:hover { background: #282828; }
+        .track-item b { display: block; font-size: 0.9rem; }
+        .track-item span { font-size: 0.8rem; color: var(--text-dim); }
+
+        /* Sticky Player Bar */
+        .now-playing-bar {
+            position: sticky;
+            bottom: 0;
+            background: #181818;
+            border-top: 2px solid var(--primary);
+            padding: 15px;
+            display: none; /* Only shows when a song starts */
         }
 
-        .song-item.active {
-            background: rgba(29, 185, 84, 0.1);
-            color: var(--primary);
-        }
-
-        .song-item.active::before {
-            content: "▶";
-            margin-right: 10px;
-            font-size: 0.8rem;
+        audio {
+            width: 100%;
+            height: 35px;
+            filter: invert(1);
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="player-container">
-    <div class="album-art">🎵</div>
-    
-    <div class="track-info">
-        <p class="track-title" id="display-title">Select a Track</p>
-        <p class="track-artist">GitHub Cloud Library</p>
+<div class="app-container">
+    <div id="library-view" class="view">
+        <header><h1>Your Playlists</h1></header>
+        <div class="playlist-grid" id="playlist-grid">
+            </div>
     </div>
 
-    <audio id="audio-player" controls controlsList="nodownload"></audio>
-    
-    <div class="playlist" id="playlist">
+    <div id="track-view" class="view hidden">
+        <button class="back-btn" onclick="showLibrary()">← Back to Library</button>
+        <h2 id="current-playlist-name">Playlist Name</h2>
+        <div id="track-list">
+            </div>
+    </div>
+
+    <div class="now-playing-bar" id="player-bar">
+        <div style="font-size: 0.85rem;">
+            <b id="playing-title">Song Title</b><br>
+            <span id="playing-artist" style="color:#b3b3b3">Artist</span>
         </div>
+        <audio id="audio-player" controls controlsList="nodownload"></audio>
+    </div>
 </div>
 
 <script>
-    // Configuration: Add your RAW GitHub URLs here
-    const songs = [
-        { title: "శ్రీ లలిత సహస్ర నామం 1", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
-        { title: "Starboy", url: "YOUR_RAW_URL_2" },
-        { title: "Blinding Lights", url: "YOUR_RAW_URL_3" }
+    // --- DATABASE: Add your GitHub Raw URLs here ---
+    const data = [
+        {
+            id: 0,
+            title: "శ్రీ లలితా సహస్రనామం",
+            cover: "https://raw.githubusercontent.com/nagarjunagalla/music/main/chaganti.jpeg", // Replace with GitHub Image URL
+            songs: [
+                { name: "Coffee Morning", artist: "Beats by GH", url: "https://raw.githubusercontent.com/nagarjunagalla/music/main/SLSN1.mp3" },
+                { name: "Rainy Window", artist: "Sleepy Cat", url: "URL_HERE" }
+            ]
+        },
+        {
+            id: 1,
+            title: "Workout Mix",
+            cover: "https://picsum.photos/id/2/200", 
+            songs: [
+                { name: "Power Up", artist: "Gym Rat", url: "URL_HERE" },
+                { name: "Fast Lane", artist: "Runner 101", url: "URL_HERE" }
+            ]
+        }
     ];
 
+    const libraryView = document.getElementById('library-view');
+    const trackView = document.getElementById('track-view');
+    const playerBar = document.getElementById('player-bar');
     const audio = document.getElementById('audio-player');
-    const playlist = document.getElementById('playlist');
-    const displayTitle = document.getElementById('display-title');
-    let currentIndex = 0;
 
-    function init() {
-        songs.forEach((song, index) => {
+    // Render the Playlists
+    function renderLibrary() {
+        const grid = document.getElementById('playlist-grid');
+        data.forEach(pl => {
+            const card = document.createElement('div');
+            card.className = 'playlist-card';
+            card.innerHTML = `
+                <img src="${pl.cover}">
+                <b>${pl.title}</b>
+            `;
+            card.onclick = () => showTracks(pl.id);
+            grid.appendChild(card);
+        });
+    }
+
+    function showTracks(playlistId) {
+        const pl = data[playlistId];
+        document.getElementById('current-playlist-name').innerText = pl.title;
+        const listContainer = document.getElementById('track-list');
+        listContainer.innerHTML = ''; // Clear old tracks
+
+        pl.songs.forEach((song, index) => {
             const item = document.createElement('div');
-            item.className = 'song-item';
-            item.innerText = song.title;
-            item.onclick = () => playSong(index);
-            playlist.appendChild(item);
+            item.className = 'track-item';
+            item.innerHTML = `
+                <div style="margin-right:15px; color:#1DB954">${index + 1}</div>
+                <div>
+                    <b>${song.name}</b>
+                    <span>${song.artist}</span>
+                </div>
+            `;
+            item.onclick = () => playSong(song, pl.songs, index);
+            listContainer.appendChild(item);
         });
-        loadSong(0);
+
+        libraryView.classList.add('hidden');
+        trackView.classList.remove('hidden');
     }
 
-    function loadSong(index) {
-        currentIndex = index;
-        const song = songs[index];
+    function showLibrary() {
+        trackView.classList.add('hidden');
+        libraryView.classList.remove('hidden');
+    }
+
+    let currentPlaylistSongs = [];
+    let currentSongIndex = 0;
+
+    function playSong(song, playlistSongs, index) {
+        currentPlaylistSongs = playlistSongs;
+        currentSongIndex = index;
+
         audio.src = song.url;
-        displayTitle.innerText = song.title;
+        document.getElementById('playing-title').innerText = song.name;
+        document.getElementById('playing-artist').innerText = song.artist;
         
-        // Update active class
-        const items = document.querySelectorAll('.song-item');
-        items.forEach((item, i) => {
-            item.classList.toggle('active', i === index);
-        });
-    }
-
-    function playSong(index) {
-        loadSong(index);
+        playerBar.style.display = 'block';
         audio.play();
     }
 
-    // Continuous Playback logic
+    // Continuous Playback within the selected playlist
     audio.onended = () => {
-        let nextIndex = currentIndex + 1;
-        if (nextIndex >= songs.length) nextIndex = 0;
-        playSong(nextIndex);
+        currentSongIndex++;
+        if (currentSongIndex < currentPlaylistSongs.length) {
+            playSong(currentPlaylistSongs[currentSongIndex], currentPlaylistSongs, currentSongIndex);
+        } else {
+            // Loop back to start of playlist or stop
+            playSong(currentPlaylistSongs[0], currentPlaylistSongs, 0);
+        }
     };
 
-    init();
+    renderLibrary();
 </script>
 
 </body>
