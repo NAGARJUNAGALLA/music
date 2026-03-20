@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub MP3 Player</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #121212; color: white; }
+        .player-card { background: #1e1e1e; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; width: 320px; }
+        h2 { margin-bottom: 20px; font-size: 1.2rem; color: #1DB954; }
+        audio { width: 100%; margin: 20px 0; outline: none; }
+        .playlist { text-align: left; margin-top: 20px; max-height: 150px; overflow-y: auto; }
+        .song-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #333; transition: 0.3s; }
+        .song-item:hover { background: #333; }
+        .active { color: #1DB954; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="player-card">
+    <h2>My GitHub Jukebox</h2>
+    <div id="current-song">Select a song</div>
+    <audio id="audio-player" controls></audio>
+    
+    <div class="playlist" id="playlist">
+        </div>
+</div>
+
+<script>
+    // 1. REPLACE THESE URLS WITH YOUR RAW GITHUB LINKS
+    const songs = [
+        {
+            title: "Song One",
+            url: "https://raw.githubusercontent.com/USERNAME/REPO/main/song1.mp3"
+        },
+        {
+            title: "Song Two",
+            url: "https://raw.githubusercontent.com/USERNAME/REPO/main/song2.mp3"
+        }
+    ];
+
+    const audioPlayer = document.getElementById('audio-player');
+    const playlistContainer = document.getElementById('playlist');
+    const currentSongTitle = document.getElementById('current-song');
+    let currentTrackIndex = 0;
+
+    function loadTrack(index) {
+        const song = songs[index];
+        audioPlayer.src = song.url;
+        currentSongTitle.innerText = "Playing: " + song.title;
+        
+        // Highlight active song
+        document.querySelectorAll('.song-item').forEach((el, i) => {
+            el.classList.toggle('active', i === index);
+        });
+    }
+
+    // Initialize Playlist
+    songs.forEach((song, index) => {
+        const div = document.createElement('div');
+        div.classList.add('song-item');
+        div.innerText = song.title;
+        div.onclick = () => {
+            currentTrackIndex = index;
+            loadTrack(index);
+            audioPlayer.play();
+        };
+        playlistContainer.appendChild(div);
+    });
+
+    // Handle "Continuous" Playback
+    audioPlayer.onended = () => {
+        currentTrackIndex++;
+        if (currentTrackIndex >= songs.length) {
+            currentTrackIndex = 0; // Loop back to start
+        }
+        loadTrack(currentTrackIndex);
+        audioPlayer.play();
+    };
+
+    // Load first track on start
+    loadTrack(0);
+</script>
+
+</body>
+</html>
